@@ -9,19 +9,23 @@ class IncrementalEngineTests(unittest.TestCase):
         out = engine.run(["report"])
 
         self.assertEqual(out["report"]["final_price"], 104.5)
-        recomputed = [name for name, state in engine.last_trace if state == "recomputed"]
+        recomputed = [entry.name for entry in engine.last_trace if entry.state == "recomputed"]
         self.assertEqual(
             set(recomputed),
             {"base_price", "tax_rate", "discount", "price_after_discount", "final_price", "report"},
         )
+        self.assertEqual(engine.last_trace[-1].name, "report")
+        self.assertEqual(engine.last_trace[-1].state, "recomputed")
 
     def test_second_run_reuses_cache(self) -> None:
         engine = build_sample_engine()
         engine.run(["report"])
         engine.run(["report"])
 
-        recomputed = [name for name, state in engine.last_trace if state == "recomputed"]
+        recomputed = [entry.name for entry in engine.last_trace if entry.state == "recomputed"]
         self.assertEqual(recomputed, [])
+        cached = [entry.name for entry in engine.last_trace if entry.state == "cached"]
+        self.assertEqual(set(cached), {"base_price", "tax_rate", "discount", "price_after_discount", "final_price", "report"})
 
     def test_change_input_recomputes_affected_subgraph_only(self) -> None:
         engine = build_sample_engine()
@@ -31,8 +35,9 @@ class IncrementalEngineTests(unittest.TestCase):
         out = engine.run(["report"])
 
         self.assertEqual(out["report"]["final_price"], 114.0)
-        recomputed = [name for name, state in engine.last_trace if state == "recomputed"]
+        recomputed = [entry.name for entry in engine.last_trace if entry.state == "recomputed"]
         self.assertEqual(set(recomputed), {"tax_rate", "final_price", "report"})
+        self.assertEqual([entry.name for entry in engine.last_trace if entry.state == "cached"], ["base_price", "discount", "price_after_discount"])
 
     def test_missing_edge_causes_stale_result_until_fixed(self) -> None:
         buggy = build_buggy_engine()
@@ -48,6 +53,8 @@ class IncrementalEngineTests(unittest.TestCase):
         fixed.set_input("region", "eu-west-1")
         corrected = fixed.run(["package_label"])["package_label"]
         self.assertEqual(corrected, "abc123-eu-west-1")
+        fixed_recomputed = [entry.name for entry in fixed.last_trace if entry.state == "recomputed"]
+        self.assertEqual(set(fixed_recomputed), {"region", "package_label"})
 
 
 if __name__ == "__main__":
