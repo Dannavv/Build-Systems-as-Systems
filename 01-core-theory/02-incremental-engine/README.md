@@ -160,21 +160,6 @@ After this lab, you should be able to explain:
 3. Why hidden dependencies break correctness.
 4. Why explicit graph edges are required for deterministic systems.
 
-## Meta-Evaluation Checklist
-This lab includes all required dimensions:
-
-1. Correctness test
-- `tests.py` validates full recompute on cold run and selective recompute after change.
-
-2. Performance metric
-- `main.py` prints elapsed milliseconds for cold, warm, and changed runs.
-
-3. Reproducibility check
-- Same inputs produce the same output and cache behavior.
-
-4. Failure scenario
-- Buggy graph intentionally omits an edge (`region`), producing stale output.
-- Fixed graph declares the edge and recomputes correctly.
 
 ## Practical Takeaway
 If you can explain this lab, you understand the basic shape of build systems, reactive systems, and incremental pipelines:
